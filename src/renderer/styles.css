@@ -241,7 +241,15 @@ input:focus-visible, button:focus-visible { outline: 2px solid var(--focus); out
 .segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
 
 .help-content { font-size: 13px; line-height: 1.6; }
-.help-content ul { margin: 6px 0 12px; padding-left: 20px; }
+.help-content ul, .help-content ol { margin: 6px 0 12px; padding-left: 20px; }
+.help-content > strong { display: block; margin-top: 4px; }
+
+/* Brief highlight of the Support section when opened from a problem */
+.settings-section.highlight { animation: highlight 1.6s ease-out; }
+@keyframes highlight {
+  from { background: var(--warning-bg); }
+  to { background: transparent; }
+}
 .structure-tree, .release-notes {
   font-family: Consolas, "Courier New", monospace; font-size: 12px; background: var(--surface-muted);
   border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; margin: 0 0 12px; white-space: pre; overflow-x: auto;

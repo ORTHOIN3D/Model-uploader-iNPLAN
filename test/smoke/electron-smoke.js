@@ -104,6 +104,31 @@ app.on('browser-window-created', (_event, win) => {
       check(`compteur d'avertissements (« ${journal.warnings} »)`, journal.warnings === '1 avertissement');
       check("détails de l'erreur affichés", journal.details === 'détail');
 
+      // Guide and support: how to send the log file when something goes wrong
+      const guide = await js(`({
+        link: document.getElementById('helpBtn').textContent.trim(),
+        support: document.getElementById('helpModal').textContent.includes('Télécharger le fichier de logs'),
+      })`);
+      check(`lien « Guide » (« ${guide.link} »)`, guide.link === 'Guide');
+      check('le guide explique comment envoyer les logs', guide.support);
+
+      const stats = (overrides) => JSON.stringify({
+        patients: 1, newPatients: [], patientsToCheck: [], setupsCreated: 0, setupsReused: 1,
+        models: 1, modelsAlreadyPresent: 0, cutlines: 0, errors: 0, ...overrides,
+      });
+      const supportVisible = () => js("!document.getElementById('statusSupport').classList.contains('hidden')");
+      await js(`showResult({ ok: true, stats: ${stats({ errors: 2 })} })`);
+      check('bouton support après un upload avec erreurs', await supportVisible());
+      await js(`showResult({ ok: true, stats: ${stats({ patientsToCheck: ['Peter_Beatbox'] })} })`);
+      check('pas de bouton support pour des patients à compléter', !(await supportVisible()));
+      await js("showResult({ ok: false, error: 'Serveur injoignable' })");
+      check('bouton support après un upload interrompu', await supportVisible());
+      await js("document.getElementById('statusSupport').click()");
+      check('le bouton ouvre les paramètres', await js("document.getElementById('settingsModal').classList.contains('active')"));
+      await js("document.querySelector('[data-close=settingsModal]').click()");
+      await js(`showResult({ ok: true, stats: ${stats({})} })`);
+      check('pas de bouton support sans erreur', !(await supportVisible()));
+
       // Mandatory update: blocking window, install button once downloaded
       contents.send('update:state', { status: 'downloaded', version: '9.9.9', currentVersion: '0.0.0', percent: 100 });
       await wait(300);

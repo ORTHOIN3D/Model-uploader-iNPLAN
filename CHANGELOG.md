@@ -6,6 +6,7 @@ dans la fenêtre de mise à jour. Ajouter la nouvelle version en haut.
 ## 0.2.2
 
 - Un modèle déjà présent dans InPlan n'est plus affiché comme une erreur : il est simplement signalé et n'est pas renvoyé
+- En cas d'erreur, un bouton « Envoyer les logs au support » ouvre directement la section Support des paramètres ; le guide (lien « Guide ») explique comment envoyer le fichier de logs
 
 ## 0.2.1
 

@@ -12,6 +12,7 @@ const logEl = $('log');
 const uploadSummaryEl = $('uploadSummary');
 const loadingBar = $('loadingBar');
 const statusMessage = $('statusMessage');
+const supportBtn = $('statusSupport');
 const updateModal = $('updateModal');
 const updateBadge = $('updateBadge');
 
@@ -222,6 +223,7 @@ function setUploading(state) {
   if (state) {
     statusMessage.className = 'status-message';
     statusMessage.textContent = '';
+    supportBtn.classList.add('hidden');
   }
 }
 
@@ -306,8 +308,13 @@ startBtn.addEventListener('click', async () => {
     res = { ok: false, error: error?.message || 'Erreur inconnue' };
   }
   setUploading(false);
-  if (res.stats) renderSummary(res.stats);
+  showResult(res);
+  // An update found during the upload is shown once it is over
+  applyUpdateState(updateState);
+});
 
+function showResult(res) {
+  if (res.stats) renderSummary(res.stats);
   const toCheck = res.stats?.patientsToCheck?.length || 0;
   const toCheckText = `${plural(toCheck, 'patient')} à compléter avec une date de naissance`;
   if (!res.ok) {
@@ -319,9 +326,23 @@ startBtn.addEventListener('click', async () => {
   } else {
     showStatus('success', 'Upload terminé sans erreur');
   }
-  // An update found during the upload is shown once it is over
-  applyUpdateState(updateState);
-});
+  // Real problems can be sent to the support; patients to complete are fixed by the user
+  supportBtn.classList.toggle('hidden', res.ok && !(res.stats?.errors > 0));
+}
+
+// Opens the settings on the Support section (log file to send)
+function openSupportSettings() {
+  closeModal('helpModal');
+  openModal('settingsModal');
+  const section = $('supportSection');
+  section.scrollIntoView({ block: 'nearest' });
+  section.classList.remove('highlight');
+  void section.offsetWidth; // restart the highlight animation
+  section.classList.add('highlight');
+}
+
+supportBtn.addEventListener('click', openSupportSettings);
+$('helpOpenSupport').addEventListener('click', openSupportSettings);
 
 // Updates -------------------------------------------------------------------
 

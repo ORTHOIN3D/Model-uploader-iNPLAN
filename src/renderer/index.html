@@ -29,7 +29,7 @@
       <section class="card form-grid">
         <div class="field">
           <label for="rootDir">Racine des dossiers (patients)
-            <button type="button" class="link-btn" id="helpBtn">Structure attendue</button>
+            <button type="button" class="link-btn" id="helpBtn">Guide</button>
           </label>
           <div class="row">
             <input type="text" id="rootDir" placeholder="Choisir un dossier…" readonly />
@@ -47,6 +47,7 @@
         <button type="button" class="btn primary" id="start">Démarrer l'upload</button>
         <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
         <div class="status-message" id="statusMessage" role="status"></div>
+        <button type="button" class="btn hidden" id="statusSupport">Envoyer les logs au support</button>
       </section>
 
       <section class="card journal">
@@ -114,7 +115,7 @@
           </div>
         </section>
 
-        <section class="settings-section">
+        <section class="settings-section" id="supportSection">
           <h4>Support</h4>
           <p class="muted">En cas de problème, téléchargez le fichier de logs et envoyez-le par e-mail à <strong id="supportEmail">support@orthoin3d.com</strong>.</p>
           <div class="row wrap">
@@ -127,14 +128,15 @@
       </div>
     </div>
 
-    <!-- Folder structure help -->
+    <!-- Guide -->
     <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <div class="modal-content wide">
         <div class="modal-header">
-          <h3 id="helpTitle">Structure des dossiers attendue</h3>
+          <h3 id="helpTitle">Guide</h3>
           <button type="button" class="close-btn" data-close="helpModal" aria-label="Fermer">&times;</button>
         </div>
         <div class="help-content">
+          <strong>Structure des dossiers</strong>
           <pre class="structure-tree">📁 Dossier racine
   └─ 📁 Nom_Prenom (ou Nom_Prenom_AAAA-MM-JJ)
       └─ 📁 Nom_du_setup
@@ -162,6 +164,14 @@
             <li>Un fichier <code>.pts</code> par modèle, avec le même nom que le <code>.stl</code> correspondant, par exemple <code>Jane_U01.stl</code> → <code>Jane_U01.pts</code></li>
             <li>Elles sont envoyées à la fin, après tous les modèles, une fois que le serveur a fini de les traiter : cette étape peut prendre quelques minutes.</li>
           </ul>
+
+          <strong>En cas de problème</strong>
+          <ol>
+            <li>Ouvrez les paramètres (⚙ en haut à droite), section « Support ».</li>
+            <li>Cliquez sur « Télécharger le fichier de logs ».</li>
+            <li>Envoyez ce fichier à <strong>support@orthoin3d.com</strong> en décrivant le problème : le bouton « Écrire au support » prépare l'e-mail, il ne reste qu'à joindre le fichier.</li>
+          </ol>
+          <button type="button" class="btn" id="helpOpenSupport">Ouvrir la section Support</button>
         </div>
       </div>
     </div>
