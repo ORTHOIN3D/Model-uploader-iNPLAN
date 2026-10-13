@@ -254,6 +254,7 @@ function renderSummary(stats) {
   addStat(list, 'Setups créés', stats.setupsCreated);
   addStat(list, 'Setups existants', stats.setupsReused);
   addStat(list, 'Modèles chargés', stats.models);
+  if (stats.modelsAlreadyPresent > 0) addStat(list, 'Modèles déjà présents', stats.modelsAlreadyPresent);
   addStat(list, 'Lignes de découpe', stats.cutlines);
   addStat(list, 'Erreurs', stats.errors, stats.errors ? 'stat-error' : 'stat-ok');
   const children = [title, list];
@@ -312,7 +313,7 @@ startBtn.addEventListener('click', async () => {
   if (!res.ok) {
     showStatus('error', `Upload interrompu : ${res.error}`);
   } else if (res.stats.errors > 0) {
-    showStatus('warning', `Upload terminé avec ${plural(res.stats.errors, 'erreur')}${toCheck ? ` et ${toCheckText}` : ''} : voir le journal`);
+    showStatus('warning', `Upload terminé`);
   } else if (toCheck > 0) {
     showStatus('warning', `Upload terminé : ${toCheckText}`);
   } else {

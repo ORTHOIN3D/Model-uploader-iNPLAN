@@ -334,6 +334,13 @@ async function uploadOneModel({ run, filePath, patientId, setupId, log }) {
     if (run.renameAfter) await renameAfterUpload(filePath, log);
     return;
   }
+  if (reply.status === 409) {
+    // The setup already has a model for this jaw and step: nothing to send
+    stats.modelsAlreadyPresent += 1;
+    log.info(`${fileName} déjà présent dans InPlan (${POSITION_LABELS[position]}, étape ${rank}) : non renvoyé`);
+    log.debug(reply.describe());
+    return;
+  }
   stats.modelErrors += 1;
   if (reply.status === 500) {
     logFailure(
@@ -523,6 +530,7 @@ function createStats() {
     setupsReused: 0,
     setupErrors: 0,
     models: 0,
+    modelsAlreadyPresent: 0,
     modelErrors: 0,
     cutlines: 0,
     cutlineErrors: 0,
@@ -540,6 +548,9 @@ function logSummary(log, stats) {
   summaryLog.info(`Patients traités : ${stats.patients} (dont ${stats.newPatients.length} créé(s))`);
   summaryLog.info(`Setups : ${stats.setupsCreated} créé(s), ${stats.setupsReused} déjà existant(s)`);
   summaryLog.info(`Fichiers chargés : ${stats.models} modèle(s), ${stats.cutlines} ligne(s) de découpe`);
+  if (stats.modelsAlreadyPresent > 0) {
+    summaryLog.info(`${stats.modelsAlreadyPresent} modèle(s) déjà présent(s) dans InPlan, non renvoyé(s)`);
+  }
   if (stats.patientsToCheck.length > 0) {
     summaryLog.info(
       `${stats.patientsToCheck.length} patient(s) à compléter avec une date de naissance : ${stats.patientsToCheck.join(', ')}`,

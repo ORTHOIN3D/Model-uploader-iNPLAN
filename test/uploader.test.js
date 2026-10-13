@@ -305,6 +305,26 @@ test('une erreur serveur sur un patient n\'arrête pas les autres', async (t) =>
   assert.deepEqual(requestsTo(api, 'POST /api/1/models').map((r) => r.body.file), ['FILE:Gamma_U01.stl']);
 });
 
+test('modèle déjà présent (409) : message neutre, pas une erreur, fichier non renommé', async (t) => {
+  const { result, files, entries } = await upload(t, {
+    tree: ['Fdj_France/Setup/AnonymeB_lower (3).stl', 'Fdj_France/Setup/AnonymeB_lower (4).stl'],
+    routes: {
+      'POST /api/1/models': ({ body }) => (body.file === 'FILE:AnonymeB_lower (3).stl'
+        ? [409, { detail: 'Model already exists' }]
+        : [201, {}]),
+    },
+  });
+  assert.equal(result.stats.errors, 0);
+  assert.equal(result.stats.modelsAlreadyPresent, 1);
+  assert.equal(result.stats.models, 1);
+  assert.deepEqual(files, ['Fdj_France/Setup/AnonymeB_lower (3).stl', 'Fdj_France/Setup/uploaded_AnonymeB_lower (4).stl']);
+  const notice = entries.find((e) => e.message.includes('AnonymeB_lower (3).stl déjà présent'));
+  assert.equal(notice.level, 'info');
+  assert.equal(notice.message, 'AnonymeB_lower (3).stl déjà présent dans InPlan (mandibulaire, étape 3) : non renvoyé');
+  assert.ok(!entries.some((e) => ['error', 'warn'].includes(e.level)), 'ni erreur ni avertissement');
+  assert.ok(entries.some((e) => e.level === 'debug' && /HTTP 409/.test(e.message)), 'réponse du serveur gardée pour le support');
+});
+
 test('modèle refusé (500) : erreur, fichier non renommé, l\'upload continue', async (t) => {
   const { result, files } = await upload(t, {
     tree: ['Martin_Lea/S1/Martin_U01.stl', 'Martin_Lea/S2/Martin_L01.stl'],

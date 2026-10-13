@@ -3,6 +3,10 @@
 Chaque section `## <version>` devient les notes de la release GitHub, affichées aux utilisateurs
 dans la fenêtre de mise à jour. Ajouter la nouvelle version en haut.
 
+## 0.2.2
+
+- Un modèle déjà présent dans InPlan n'est plus affiché comme une erreur : il est simplement signalé et n'est pas renvoyé
+
 ## 0.2.1
 
 - Les lignes de découpe ne sont plus abandonnées quand le serveur met longtemps à répondre
