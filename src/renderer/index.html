@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iNPLAN Model uploader</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <picture>
+          <source srcset="../inplan-light.png" media="(prefers-color-scheme: dark)" />
+          <img src="../inplan.png" alt="iNPLAN" class="brand-logo" />
+        </picture>
+        <h1>Model uploader</h1>
+        <span class="version" id="appVersion"></span>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="update-badge hidden" id="updateBadge"></button>
+        <button type="button" class="icon-btn" id="settingsBtn" title="Paramètres" aria-label="Paramètres">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94a7.4 7.4 0 0 0 .05-.94 7.4 7.4 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.67 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.4 7.4 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.25.42.49.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card form-grid">
+        <div class="field">
+          <label for="rootDir">Racine des dossiers (patients)
+            <button type="button" class="link-btn" id="helpBtn">Structure attendue</button>
+          </label>
+          <div class="row">
+            <input type="text" id="rootDir" placeholder="Choisir un dossier…" readonly />
+            <button type="button" class="btn" id="chooseRoot">Parcourir…</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="username">Identifiants InPlan</label>
+          <input type="text" id="username" placeholder="Nom d'utilisateur" autocomplete="username" />
+          <input type="password" id="password" placeholder="Mot de passe" autocomplete="current-password" />
+        </div>
+      </section>
+
+      <section class="card run-bar">
+        <button type="button" class="btn primary" id="start">Démarrer l'upload</button>
+        <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill"></div></div>
+        <div class="status-message" id="statusMessage" role="status"></div>
+      </section>
+
+      <section class="card journal">
+        <div class="journal-head">
+          <h2>Journal</h2>
+          <div class="journal-tools">
+            <span class="counter counter-error" id="errorCount"></span>
+            <span class="counter counter-warn" id="warnCount"></span>
+            <label class="check small"><input type="checkbox" id="onlyProblems" /> Erreurs uniquement</label>
+            <button type="button" class="btn small" id="clearLog">Effacer</button>
+          </div>
+        </div>
+        <div class="journal-layout">
+          <div class="console" id="log" aria-live="polite"></div>
+          <aside class="summary" id="uploadSummary">
+            <h3>Dernier envoi</h3>
+            <p class="muted">Aucun envoi pour le moment.</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <!-- Settings -->
+    <div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-content wide">
+        <div class="modal-header">
+          <h3 id="settingsTitle">Paramètres</h3>
+          <button type="button" class="close-btn" data-close="settingsModal" aria-label="Fermer">&times;</button>
+        </div>
+
+        <section class="settings-section">
+          <h4>Apparence</h4>
+          <div class="segmented" role="radiogroup" aria-label="Thème">
+            <label><input type="radio" name="theme" value="system" /> <span>Système</span></label>
+            <label><input type="radio" name="theme" value="light" /> <span>Clair</span></label>
+            <label><input type="radio" name="theme" value="dark" /> <span>Sombre</span></label>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h4>Serveur</h4>
+          <label for="baseUrl">URL du serveur InPlan</label>
+          <div class="row">
+            <input type="text" id="baseUrl" placeholder="https://api.orthoin3d.com" />
+            <button type="button" class="btn" id="setDefaultProd">Par défaut</button>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="testConnection">Tester la connexion</button>
+            <span class="inline-status" id="testResult"></span>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h4>Upload et journal</h4>
+          <label class="check"><input type="checkbox" id="renameAfter" /> Renommer les fichiers après chargement (préfixe <code>uploaded_</code>)</label>
+          <label class="check"><input type="checkbox" id="rememberPassword" /> Mémoriser le mot de passe (chiffré sur cet ordinateur)</label>
+          <label class="check"><input type="checkbox" id="verboseLog" /> Afficher les détails techniques dans le journal</label>
+        </section>
+
+        <section class="settings-section">
+          <h4>Mises à jour</h4>
+          <div class="row spread">
+            <span class="muted" id="updateStatusText"></span>
+            <button type="button" class="btn" id="checkUpdates">Vérifier maintenant</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h4>Support</h4>
+          <p class="muted">En cas de problème, téléchargez le fichier de logs et envoyez-le par e-mail à <strong id="supportEmail">support@orthoin3d.com</strong>. Il contient l'historique des envois et des erreurs, jamais votre mot de passe.</p>
+          <div class="row wrap">
+            <button type="button" class="btn primary" id="exportLogs">Télécharger le fichier de logs</button>
+            <button type="button" class="btn" id="contactSupport">Écrire au support</button>
+            <button type="button" class="link-btn" id="openLogsFolder">Ouvrir le dossier des logs</button>
+          </div>
+          <p class="inline-status" id="exportResult"></p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Folder structure help -->
+    <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-content wide">
+        <div class="modal-header">
+          <h3 id="helpTitle">Structure des dossiers attendue</h3>
+          <button type="button" class="close-btn" data-close="helpModal" aria-label="Fermer">&times;</button>
+        </div>
+        <div class="help-content">
+          <pre class="structure-tree">📁 Dossier racine
+  └─ 📁 Nom_Prenom (ou Nom_Prenom_AAAA-MM-JJ)
+      └─ 📁 Nom_du_setup
+          ├─ 📄 fichier_u1.stl  (modèle maxillaire)
+          ├─ 📄 fichier_l1.stl  (modèle mandibulaire)
+          ├─ 📄 fichier_u1.pts  (ligne de découpe de fichier_u1.stl)
+          └─ 📄 fichier_l1.pts  (ligne de découpe de fichier_l1.stl)</pre>
+
+          <strong>Dossiers patients</strong>
+          <ul>
+            <li><code>Nom_Prenom</code>, par exemple <code>Dupont_Jean</code></li>
+            <li><code>Nom_Prenom_AAAA-MM-JJ</code>, par exemple <code>Dupont_Jean_1990-05-15</code>. La date de naissance est nécessaire si plusieurs patients portent le même nom.</li>
+            <li>Un patient ou un setup qui existe déjà dans InPlan est réutilisé : seuls les nouveaux fichiers sont envoyés.</li>
+          </ul>
+
+          <strong>Modèles (.stl)</strong>
+          <ul>
+            <li>Maxillaire : le nom contient « superieur », « maxil », « upper » ou se termine par <code>_u1.stl</code> / <code>u1.stl</code></li>
+            <li>Mandibulaire : le nom contient « inferieur », « mand », « lower » ou se termine par <code>_l1.stl</code> / <code>l1.stl</code></li>
+            <li>Le numéro indique l'étape du traitement</li>
+          </ul>
+
+          <strong>Lignes de découpe (.pts)</strong>
+          <ul>
+            <li>Un fichier <code>.pts</code> par modèle, avec le même nom que le <code>.stl</code> correspondant, par exemple <code>Jane_U01.stl</code> → <code>Jane_U01.pts</code></li>
+            <li>Elles sont envoyées à la fin, après tous les modèles, une fois que le serveur a fini de les traiter : cette étape peut prendre quelques minutes.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mandatory update (cannot be dismissed) -->
+    <div class="modal blocking" id="updateModal" role="alertdialog" aria-modal="true" aria-labelledby="updateTitle">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="updateTitle">Mise à jour obligatoire</h3>
+        </div>
+        <p>La version <strong id="updateVersion"></strong> est disponible. Elle doit être installée pour continuer à utiliser l'application.</p>
+        <pre class="release-notes hidden" id="updateNotes"></pre>
+        <div class="progress"><div class="progress-fill" id="updateProgress"></div></div>
+        <p class="muted" id="updateProgressText"></p>
+        <div class="modal-actions">
+          <button type="button" class="link-btn" id="updateManual">Télécharger manuellement</button>
+          <button type="button" class="btn hidden" id="updateRetry">Réessayer</button>
+          <button type="button" class="btn primary" id="updateInstall" disabled>Installer et redémarrer</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

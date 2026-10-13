@@ -1,0 +1,54 @@
+{
+  "name": "inplan-model-uploader",
+  "version": "0.2.0",
+  "private": true,
+  "description": "App for upload STL models and PTS cutlines to InPlan",
+  "author": {
+    "name": "OrthoIN3D",
+    "email": "support@orthoin3d.com"
+  },
+  "homepage": "https://app.orthoin3d.com",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
+  },
+  "dependencies": {
+    "axios": "1.20.0",
+    "electron-updater": "6.8.9",
+    "form-data": "4.0.6"
+  },
+  "devDependencies": {
+    "electron": "43.7.5",
+    "electron-builder": "26.16.1"
+  },
+  "build": {
+    "appId": "com.inplan.modeluploader",
+    "productName": "iNPLAN Model uploader",
+    "copyright": "Copyright © 2026 OrthoIN3D",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icons/icon.ico"
+    },
+    "nsis": {
+      "artifactName": "iNPLAN-Model-uploader-${version}-Setup.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ORTHOIN3D",
+        "repo": "Model-uploader-iNPLAN"
+      }
+    ]
+  }
+}
