@@ -314,7 +314,7 @@ startBtn.addEventListener('click', async () => {
   } else if (res.stats.errors > 0) {
     showStatus('warning', `Upload terminé avec ${plural(res.stats.errors, 'erreur')}${toCheck ? ` et ${toCheckText}` : ''} : voir le journal`);
   } else if (toCheck > 0) {
-    showStatus('warning', `Upload terminé : ${toCheckText} (voir le journal)`);
+    showStatus('warning', `Upload terminé : ${toCheckText}`);
   } else {
     showStatus('success', 'Upload terminé sans erreur');
   }
