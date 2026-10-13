@@ -17,10 +17,11 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node --test \"test/*.test.js\"",
+    "test:smoke": "electron test/smoke/electron-smoke.js",
     "pack": "electron-builder --dir",
     "dist": "electron-builder --win --publish never",
-    "dist:linux": "electron-builder --linux --publish never",
-    "release": "electron-builder --win --publish always"
+    "dist:linux": "electron-builder --linux --publish never"
   },
   "dependencies": {
     "axios": "1.20.0",

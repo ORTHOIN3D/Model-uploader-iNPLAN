@@ -15,9 +15,12 @@ const UPLOAD_TIMEOUT_MS = 0; // big STL files on slow connections: no limit
 // The server processes each model after its upload and answers 503 to the
 // cutline import until it is done: cutlines are sent after ALL the models,
 // after a first delay, then retried by rounds.
-const CUTLINE_FIRST_DELAY_MS = 30 * 1000;
-const CUTLINE_RETRY_DELAY_MS = 20 * 1000;
-const CUTLINE_MAX_WAIT_MS = 15 * 60 * 1000;
+// (the tests pass shorter timings to runUpload)
+const DEFAULT_CUTLINE_TIMINGS = {
+  firstDelayMs: 30 * 1000,
+  retryDelayMs: 20 * 1000,
+  maxWaitMs: 15 * 60 * 1000,
+};
 const MAX_BODY_IN_LOG = 600;
 const POSITION_LABELS = ['maxillaire', 'mandibulaire'];
 
@@ -406,13 +409,14 @@ async function uploadCutlines({ run, log }) {
   log.title(`Lignes de découpe (${queue.length})`);
   const cutlineLog = log.nested();
 
-  const firstWait = run.lastModelUploadAt ? CUTLINE_FIRST_DELAY_MS - (Date.now() - run.lastModelUploadAt) : 0;
+  const { firstDelayMs, retryDelayMs, maxWaitMs } = run.cutlineTimings;
+  const firstWait = run.lastModelUploadAt ? firstDelayMs - (Date.now() - run.lastModelUploadAt) : 0;
   if (firstWait > 0) {
     cutlineLog.info(`Attente de ${seconds(firstWait)} pour laisser le serveur traiter les modèles…`);
     await sleep(firstWait);
   }
 
-  const deadline = Date.now() + CUTLINE_MAX_WAIT_MS;
+  const deadline = Date.now() + maxWaitMs;
   let pending = queue;
   while (pending.length > 0) {
     const notReady = [];
@@ -421,20 +425,20 @@ async function uploadCutlines({ run, log }) {
     }
     if (notReady.length === 0) return;
 
-    if (Date.now() + CUTLINE_RETRY_DELAY_MS > deadline) {
+    if (Date.now() + retryDelayMs > deadline) {
       for (const item of notReady) {
         run.stats.cutlineErrors += 1;
         cutlineLog.error(
           `${item.label} non chargée : le modèle n'est toujours pas prêt sur le serveur.`,
-          `Le serveur traite encore le modèle après ${Math.round(CUTLINE_MAX_WAIT_MS / 60000)} minutes d'attente. Relancez l'upload plus tard.`,
+          `Le serveur traite encore le modèle après ${Math.round(maxWaitMs / 60000)} minutes d'attente. Relancez l'upload plus tard.`,
         );
       }
       return;
     }
     cutlineLog.info(
-      `${notReady.length} ligne(s) de découpe en attente : modèle pas encore prêt sur le serveur, nouvel essai dans ${seconds(CUTLINE_RETRY_DELAY_MS)}`,
+      `${notReady.length} ligne(s) de découpe en attente : modèle pas encore prêt sur le serveur, nouvel essai dans ${seconds(retryDelayMs)}`,
     );
-    await sleep(CUTLINE_RETRY_DELAY_MS);
+    await sleep(retryDelayMs);
     pending = notReady;
   }
 }
@@ -546,12 +550,13 @@ function logSummary(log, stats) {
   else summaryLog.success('Aucune erreur');
 }
 
-async function runUpload({ rootDir, baseUrl, credentials, renameAfterUpload, log = noopLog }) {
+async function runUpload({ rootDir, baseUrl, credentials, renameAfterUpload, log = noopLog, cutlineTimings }) {
   const run = {
     client: null,
     renameAfter: !!renameAfterUpload,
     stats: createStats(),
     cutlineQueue: [],
+    cutlineTimings: { ...DEFAULT_CUTLINE_TIMINGS, ...cutlineTimings },
     lastModelUploadAt: 0,
   };
   const { stats } = run;

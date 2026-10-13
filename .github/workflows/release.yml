@@ -1,0 +1,99 @@
+# Tests on every push and pull request. On main, when the version of
+# package.json has no release yet, the installer is built and published as a
+# GitHub release: the installed applications then download it.
+name: Tests et release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Moteur d'upload, journal, messages
+        run: npm test
+      - name: Application Electron
+        run: npm run test:smoke
+
+  release:
+    name: Release
+    needs: tests
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version à publier
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$version est déjà publiée : pas de nouvelle release."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.version.outputs.publish == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Construction de l'installeur
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          npm ci
+          npm run dist
+
+      - name: Notes de version
+        if: steps.version.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Section "## <version>" of CHANGELOG.md, otherwise the commits since the last release
+          awk -v v="$VERSION" '{ sub(/\r$/, "") } $0 == "## " v { found = 1; next } /^## / && found { exit } found' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            previous=$(git describe --tags --abbrev=0 --match 'v*' 2> /dev/null || true)
+            git log --no-merges --format='- %s' ${previous:+$previous..}HEAD > release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Publication de la release
+        if: steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file release-notes.md \
+            "dist/iNPLAN-Model-uploader-$VERSION-Setup.exe" \
+            "dist/iNPLAN-Model-uploader-$VERSION-Setup.exe.blockmap" \
+            dist/latest.yml
