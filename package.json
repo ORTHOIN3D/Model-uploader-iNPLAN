@@ -9,10 +9,17 @@
   },
   "homepage": "https://app.orthoin3d.com",
   "license": "MIT",
+  "keywords": [
+    "inplan",
+    "model",
+    "uploader"
+  ],
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
+    "pack": "electron-builder --dir",
     "dist": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never",
     "release": "electron-builder --win --publish always"
   },
   "dependencies": {
@@ -36,11 +43,42 @@
       "src/**/*",
       "package.json"
     ],
+    "asar": true,
     "win": {
-      "target": "nsis",
-      "icon": "build/icons/icon.ico"
+      "icon": "build/icons/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "build/icons",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Utility",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": false,
       "artifactName": "iNPLAN-Model-uploader-${version}-Setup.${ext}"
     },
     "publish": [

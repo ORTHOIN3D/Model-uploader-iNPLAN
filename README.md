@@ -29,7 +29,8 @@ Si `npm start` indique qu'Electron n'est pas installé : `node node_modules/elec
 npm run dist
 ```
 
-Produit `dist/iNPLAN-Model-uploader-<version>-Setup.exe`. L'`appId` (`com.inplan.modeluploader`)
+Produit `dist/iNPLAN-Model-uploader-<version>-Setup.exe`. Sous Linux, `npm run dist:linux`
+produit un AppImage et un `.deb`. L'`appId` (`com.inplan.modeluploader`)
 et le nom du package (`inplan-model-uploader`) doivent rester identiques : ils permettent de mettre
 à jour l'application déjà installée chez les clients et de conserver leur configuration.
 

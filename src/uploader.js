@@ -350,6 +350,7 @@ async function uploadOneModel({ run, filePath, patientId, setupId, log }) {
 async function sendOneCutline({ run, item, log }) {
   const { client, stats } = run;
   const reply = await client.request('post', '/api/1/cutlines/existing_pts', {
+    timeout: UPLOAD_TIMEOUT_MS,
     makeForm: () => {
       const form = new FormData();
       form.append('setup_id', String(item.setupId));
